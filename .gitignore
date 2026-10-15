@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Ambiente / IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Dados gerados (reconstruídos pelos notebooks/scripts)
+data/processed/*
+!data/processed/.gitkeep
+
+# Modelos treinados (gerados pela pipeline)
+models/*
+!models/.gitkeep
+
+# Segredos
+.env
