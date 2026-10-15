@@ -23,6 +23,9 @@ RANDOM_STATE = 42
 # Ponto de corte do INEP: aluno é considerado alfabetizado com proficiência >= 743
 CORTE_ALFABETIZACAO = 743
 
+# Meta nacional do Compromisso Criança Alfabetizada: 80% das crianças alfabetizadas até 2030
+META_NACIONAL_2030 = 80
+
 # Códigos de rede de ensino (dicionário do INEP / Base dos Dados)
 MAPA_REDE = {0: "Outros", 2: "Estadual", 3: "Municipal", 5: "Pública"}
 

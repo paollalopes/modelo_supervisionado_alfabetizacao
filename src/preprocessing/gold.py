@@ -1,4 +1,7 @@
-"""Reconstrução das camadas Silver e Gold da Fase 2.
+"""Reconstrução das camadas Silver e Gold a partir dos CSVs originais do INEP.
+
+Observação: os anos de referência (2023 e 2024) estão fixos nas regras de meta e de evolução.
+Ao incorporar dados de 2025, revisar ``gold_brasil``, ``gold_municipio`` e ``gold_municipio_evolucao``.
 """
 
 from __future__ import annotations
@@ -61,7 +64,7 @@ def construir_silver(bronze: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]
 
 
 def validar_silver(silver: dict[str, pd.DataFrame]) -> pd.DataFrame:
-    """Regras de qualidade"""
+    """Executa as regras de qualidade da Silver e devolve uma tabela com PASS/FAIL por regra."""
     a = silver["avaliacao_alunos"]
     validos = a[a["preenchimento_caderno"] == 1]
     regras = [
@@ -90,7 +93,8 @@ def validar_silver(silver: dict[str, pd.DataFrame]) -> pd.DataFrame:
 # --------------------------------------------------------------------------------------
 # Silver -> Gold
 # --------------------------------------------------------------------------------------
-def gold_brasil(silver):
+def gold_brasil(silver: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """Resultado nacional por ano, com a meta do ano, a diferença para a meta e o status."""
     df = silver["meta_brasil"].copy()
     df["meta_ano"] = np.where(df["ano"] == 2024, df["meta_alfabetizacao_2024"],
                               np.where(df["ano"] == 2025, df["meta_alfabetizacao_2025"], np.nan))
@@ -101,12 +105,13 @@ def gold_brasil(silver):
     return df.sort_values("ano").reset_index(drop=True)
 
 
-def gold_uf(silver):
+def gold_uf(silver: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """Taxa de alfabetização e média de Português por UF, ano e rede."""
     cols = ["ano", "sigla_uf", "rede", "rede_ensino", "serie", "taxa_alfabetizacao", "media_portugues"]
     return silver["avaliacao_uf"][cols].sort_values(["ano", "sigla_uf", "rede"]).reset_index(drop=True)
 
 
-def gold_municipio(silver):
+def gold_municipio(silver: dict[str, pd.DataFrame]) -> pd.DataFrame:
     """Resultado municipal (rede Municipal, compatível com as metas municipais) + metas."""
     aval = silver["avaliacao_municipio"]
     municipal = aval[aval["rede"] == 3][
@@ -114,6 +119,7 @@ def gold_municipio(silver):
     meta = silver["meta_municipio"][
         ["ano", "id_municipio", "percentual_participacao", "nivel_alfabetizacao"] + METAS]
     df = municipal.merge(meta, on=["ano", "id_municipio"], how="left")
+    # Só 2024 tem meta municipal comparável ao resultado; 2023 fica como SEM_META.
     df["meta_ano"] = np.where(df["ano"] == 2024, df["meta_alfabetizacao_2024"], np.nan)
     df["diferenca_para_meta"] = (df["taxa_alfabetizacao"] - df["meta_ano"]).round(2)
     df["status_meta"] = np.select(
@@ -122,7 +128,8 @@ def gold_municipio(silver):
     return df.sort_values(["ano", "id_municipio"]).reset_index(drop=True)
 
 
-def gold_municipio_evolucao(gold_mun):
+def gold_municipio_evolucao(gold_mun: pd.DataFrame) -> pd.DataFrame:
+    """Evolução 2023 → 2024 por município: variação da taxa e da média e tendência."""
     p = gold_mun.pivot_table(index=["id_municipio", "sigla_uf", "regiao"], columns="ano",
                              values=["taxa_alfabetizacao", "media_portugues"])
     p.columns = [f"{v}_{a}" for v, a in p.columns]
@@ -135,7 +142,7 @@ def gold_municipio_evolucao(gold_mun):
     return p
 
 
-def gold_municipio_redes(silver):
+def gold_municipio_redes(silver: dict[str, pd.DataFrame]) -> pd.DataFrame:
     """Visão larga por município: taxa e média de cada rede (Estadual, Municipal, Pública)."""
     aval = silver["avaliacao_municipio"]
     aval = aval[aval["rede"].isin([2, 3, 5])]
@@ -145,14 +152,15 @@ def gold_municipio_redes(silver):
     return p.reset_index()
 
 
-def gold_alunos(silver):
+def gold_alunos(silver: dict[str, pd.DataFrame]) -> pd.DataFrame:
     """Base de alunos (nível do indivíduo) com flags de avaliação válida."""
     a = silver["avaliacao_alunos"].copy()
     a["avaliacao_valida"] = (a["preenchimento_caderno"] == 1).astype("int8")
     return a
 
 
-def gold_indicadores_alunos(alunos):
+def gold_indicadores_alunos(alunos: pd.DataFrame) -> pd.DataFrame:
+    """Indicadores por ano e rede: presença, avaliações válidas, alfabetização e proficiência média."""
     return (alunos.groupby(["ano", "rede_ensino"])
             .agg(alunos=("id_aluno", "count"),
                  taxa_presenca=("presenca", "mean"),
@@ -164,6 +172,7 @@ def gold_indicadores_alunos(alunos):
 
 
 def construir_gold(salvar: bool = True) -> dict[str, pd.DataFrame]:
+    """Executa Bronze → Silver → Gold e, se ``salvar=True``, grava cada tabela em Parquet."""
     silver = construir_silver(carregar_bronze())
     gm = gold_municipio(silver)
     alunos = gold_alunos(silver)
@@ -183,4 +192,5 @@ def construir_gold(salvar: bool = True) -> dict[str, pd.DataFrame]:
 
 
 def carregar_gold(nome: str) -> pd.DataFrame:
+    """Lê uma tabela Gold já gerada em data/processed (ex.: ``carregar_gold("gold_alunos")``)."""
     return pd.read_parquet(PROCESSED_DIR / f"{nome}.parquet")
