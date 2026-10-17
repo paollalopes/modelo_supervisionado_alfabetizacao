@@ -1,0 +1,19 @@
+{
+  "abordagem": "LightGBM regressor da taxa do ano seguinte + P(taxa < meta) com sigma por porte",
+  "treino": "indicadores 2023 -> taxa 2024 (exceto RS, choque das enchentes)",
+  "sigma_por_porte": {
+    "100–500 mil": 5.47,
+    "20–100 mil": 8.417,
+    "5–20 mil": 11.53,
+    "Até 5 mil": 14.45,
+    "Mais de 500 mil": 5.541
+  },
+  "versoes": {
+    "python": "3.12.5",
+    "scikit-learn": "1.9.0",
+    "lightgbm": "4.7.0",
+    "xgboost": "3.4.1",
+    "pandas": "2.3.3",
+    "numpy": "2.3.5"
+  }
+}
