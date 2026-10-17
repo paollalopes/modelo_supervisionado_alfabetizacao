@@ -8,14 +8,17 @@ from matplotlib.colors import LinearSegmentedColormap
 
 from src.config import IMAGES_DIR
 
-SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
-AZUL, LARANJA = SERIES[0], SERIES[1]
-CINZA = "#898781"
+# Paleta executiva: azul como cor principal (em degradê para ordem ou intensidade), laranja e vermelho
+# só para alerta e situação negativa, cinza para referências (médias, linhas de base, itens secundários).
+AZUL, AZUL_ESCURO, AZUL_MEDIO, AZUL_CLARO = "#2a78d6", "#184f95", "#6da7ec", "#9ec5f4"
+ESCALA_AZUL = ["#0d366b", "#184f95", "#2a78d6", "#6da7ec", "#9ec5f4"]   # do mais escuro ao mais claro
+LARANJA, VERMELHO = "#eb6834", "#d03b3b"
+CINZA, CINZA_CLARO = "#898781", "#c3c2b7"
 TEXTO, TEXTO_2 = "#0b0b0b", "#52514e"
 GRADE, EIXO, SUPERFICIE = "#e1e0d9", "#c3c2b7", "#fcfcfb"
 
-# Status (reservados para atingiu / não atingiu meta; sempre acompanhados de rótulo)
-STATUS_OK, STATUS_CRITICO, STATUS_ALERTA = "#0ca30c", "#d03b3b", "#fab219"
+# Ordem de cores para séries (ex.: dois modelos comparados no mesmo gráfico)
+SERIES = [AZUL, LARANJA, AZUL_ESCURO, CINZA, AZUL_CLARO, VERMELHO]
 
 SEQ_AZUL = LinearSegmentedColormap.from_list(
     "seq_azul", ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"])
